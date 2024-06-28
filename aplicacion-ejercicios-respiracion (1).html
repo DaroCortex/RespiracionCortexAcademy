@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejercicio de Respiración</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            background-image: 
+                linear-gradient(to right, black 1px, transparent 1px),
+                linear-gradient(to bottom, black 1px, transparent 1px);
+            background-size: 50px 86.6px;
+            background-position: -25px -43.3px;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .square {
+            width: 300px;
+            height: 300px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            margin: 0 10px;
+        }
+        #mainSquare {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 10s ease infinite;
+        }
+        #roundsSquare {
+            background: linear-gradient(-45deg, #4CAF50, #FFFFFF, #F44336);
+            background-size: 400% 400%;
+            animation: gradientBG 10s ease infinite;
+            border: 3px solid blue;
+            overflow-y: auto;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        #roundsSquare h2 {
+            font-size: 30px;
+            margin-top: 0;
+            text-align: center;
+            color: black;
+        }
+        #roundsSquare p {
+            font-size: 20px;
+            margin: 5px 0;
+            color: black;
+        }
+        .button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: black;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #countdown {
+            font-size: 72px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .bold-text {
+            font-weight: bold;
+            font-size: 24px;
+        }
+        #counter {
+            transition: transform 2s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <button id="startButton" class="button">Iniciar</button>
+    <div class="container">
+        <div id="mainSquare" class="square">
+            <div id="counter"></div>
+        </div>
+        <div id="roundsSquare" class="square">
+            <h2>Rondas</h2>
+            <div id="roundsLog"></div>
+        </div>
+    </div>
+    <div id="countdown"></div>
+    <button id="endButton" class="button">Finalizar</button>
+
+    <script>
+        const mainSquare = document.getElementById('mainSquare');
+        const counter = document.getElementById('counter');
+        const startButton = document.getElementById('startButton');
+        const endButton = document.getElementById('endButton');
+        const roundsLog = document.getElementById('roundsLog');
+        const countdownElement = document.getElementById('countdown');
+
+        let respirax1 = new Audio('respirax1.mp3');
+        let bosque7min = new Audio('bosque7min.mp3');
+        let inalamos = new Audio('inalamos.mp3');
+
+        let repetitionCount = 0;
+        let isRespirax1Playing = false;
+        let isBosque7minPlaying = false;
+        let chronometer;
+        let chronometerTime = 0;
+        let roundNumber = 1;
+        let countdownInterval;
+
+        startButton.addEventListener('click', startExercise);
+        endButton.addEventListener('click', endExercise);
+        document.addEventListener('keydown', handleSpacebar);
+
+        function startExercise() {
+            repetitionCount = 0;
+            playRespirax1();
+        }
+
+        function playRespirax1() {
+            isRespirax1Playing = true;
+            respirax1.play();
+            respirax1.onended = () => {
+                repetitionCount++;
+                updateCounter();
+                if (repetitionCount < 40) {
+                    playRespirax1();
+                } else {
+                    playBosque7min();
+                }
+            };
+        }
+
+        function updateCounter() {
+            counter.textContent = repetitionCount;
+            counter.style.transform = 'scale(2)';
+            setTimeout(() => {
+                counter.style.transform = 'scale(1)';
+            }, 2000);
+        }
+
+        function playBosque7min() {
+            isRespirax1Playing = false;
+            isBosque7minPlaying = true;
+            bosque7min.play();
+            startChronometer();
+        }
+
+        function startChronometer() {
+            chronometerTime = 0;
+            chronometer = setInterval(() => {
+                chronometerTime++;
+                counter.textContent = formatTime(chronometerTime);
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function handleSpacebar(event) {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                if (isRespirax1Playing) {
+                    respirax1.pause();
+                    playBosque7min();
+                } else if (isBosque7minPlaying && !countdownInterval) {
+                    bosque7min.pause();
+                    clearInterval(chronometer);
+                    logRound();
+                    startCountdown();
+                }
+            }
+        }
+
+        function logRound() {
+            const roundLog = document.createElement('p');
+            roundLog.textContent = `Ronda ${roundNumber}: ${formatTime(chronometerTime)}`;
+            roundsLog.appendChild(roundLog);
+            roundNumber++;
+        }
+
+        function startCountdown() {
+            let count = 15;
+            countdownElement.style.display = 'block';
+            inalamos.play();
+            countdownInterval = setInterval(() => {
+                counter.textContent = count;
+                if (count === 0) {
+                    clearInterval(countdownInterval);
+                    countdownElement.style.display = 'none';
+                    countdownInterval = null;
+                    repetitionCount = 0;
+                    playRespirax1();
+                }
+                count--;
+            }, 1000);
+        }
+
+        function endExercise() {
+            respirax1.pause();
+            bosque7min.pause();
+            inalamos.pause();
+            clearInterval(chronometer);
+            clearInterval(countdownInterval);
+            isRespirax1Playing = false;
+            isBosque7minPlaying = false;
+            counter.textContent = '';
+            countdownElement.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
